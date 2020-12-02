@@ -1,55 +1,59 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 12 10:11:09 2020
-
-@author: NAT
-"""
 import torch
-from torch.utils.data import Dataset
-import json
+import torchvision
+import pandas as pd
 import os
+import numpy as np
 from PIL import Image
-from utils import transform
-class VOCDataset(Dataset):
-    def __init__(self, DataFolder, split):
+import matplotlib.pyplot as plt
+import warnings
+from torch.utils.data import Dataset, DataLoader
+import json
+from torchvision import transforms, utils
+
+
+class CrowdDataset(Dataset):
+
+    def __init__(self, root, csv_file, transform=None):
         """
-            DataFolder: folder where data files are stored
-            split: split {"TRAIN", "TEST"}
+        Args:
+            csv_file (string): Path to the csv file with examples and annotations.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
         """
-        self.split = str(split.upper())
-        if self.split not in {"TRAIN", "TEST"}:
-            print("Param split not in {TRAIN, TEST}")
-            assert self.split in {"TRAIN", "TEST"}
-        
-        self.DataFolder = DataFolder
-        
-        #read data file from json file
-        with open(os.path.join(DataFolder, self.split+ '_images.json'), 'r') as j:
-            self.images = json.load(j)
-        with open(os.path.join(DataFolder, self.split+ '_objects.json'), 'r') as j:
-            self.objects = json.load(j)
-            
-        assert len(self.images) == len(self.objects)
-        
+        self.examples = pd.read_csv(os.path.join(root, csv_file))
+        self.root = root
+        # self.transform = transform
+
     def __len__(self):
-        return len(self.images)
-    
-    def __getitem__(self, i):
+        return len(self.examples)
+
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        grid_dim = 7
+        img_dim = 448
+        len_of_grid = img_dim / grid_dim
+        img_path = os.path.join(self.root, self.examples.iloc[idx, 0])
+        image = Image.open(img_path)
+        annotations_path = os.path.join(self.root, self.examples.iloc[idx, 1])
+        annotation_dict = json.load(open(annotations_path, "r"))
+        annotations = annotation_dict["boxes"]
+        if len(annotations) is 0: 
+          boxes =  np.array([[0,0,1,1]])
+          labels = np.zeros(1)
+        else:
+          boxes =  np.asarray(annotations)
+          labels = np.ones(len(boxes))
+       
+        t = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.455, 0.422, 0.409],
+                                 std=[0.193, 0.181, 0.178])
+        ])
         
-        image = Image.open(self.images[i], mode= "r")
-        image = image.convert("RGB")
-        
-        #Read objects in this image
-        objects = self.objects[i]
-        boxes = torch.FloatTensor(objects["boxes"])
-        labels = torch.LongTensor(objects['labels']) 
-        difficulties = torch.ByteTensor(objects['difficulties'])
-        
-        #Apply transforms
-        new_image, new_boxes, new_labels, new_difficulties = transform(image, boxes,
-                                                                       labels, difficulties, self.split)
-        
-        return new_image, new_boxes, new_labels, new_difficulties
-        
-            
-        
+        x = t(image) 
+        targets = {} 
+        targets['boxes'] = torch.from_numpy(boxes).float() 
+        targets['labels'] = torch.from_numpy(labels).type(torch.int64)
+        return x, targets
