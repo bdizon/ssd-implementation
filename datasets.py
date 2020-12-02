@@ -54,6 +54,6 @@ class CrowdDataset(Dataset):
         
         x = t(image) 
         targets = {} 
-        targets['boxes'] = torch.from_numpy(boxes).float() 
-        targets['labels'] = torch.from_numpy(labels).type(torch.int64)
-        return x, targets
+        #targets['boxes'] = 
+        #targets['labels'] = torch.from_numpy(labels).type(torch.int64)
+        return x, torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)

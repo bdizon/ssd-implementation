@@ -18,8 +18,8 @@ from model.metrics.metric import Metrics
 import argparse
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-def str2bool(v):
-    return v.lower() in ("yes", "true", "t", "1")
+
+'''
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--dataset_root", default= "./JSONdata/", help= "Dataroot directory path")
@@ -34,41 +34,39 @@ ap.add_argument("--iterations", default= 145000, type= int, help = "number of it
 ap.add_argument("--grad_clip", default = None, help= "Gradient clip for large batch_size")
 ap.add_argument("--adjust_optim", default = None, help = "Adjust optimizer for checkpoint model")
 args = ap.parse_args()
-
+'''
 #Data parameters
-data_folder = args.dataset_root
-num_classes = len(label_map)
 
-checkpoint = args.checkpoint
-batch_size = args.batch_size  # batch size
-iterations = args.iterations  # number of iterations to train
-workers = args.num_workers  # number of workers for loading data in the DataLoader
+num_classes = 2
+
+batch_size = 8  # batch size
+iterations = 1000  # number of iterations to train
+workers = 4  # number of workers for loading data in the DataLoader
 print_freq = 100  # print training status every __ batches
-lr = args.lr  # learning rate
+lr =   # learning rate
 decay_lr_at = [96500, 120000]  # decay learning rate after these many iterations
 decay_lr_to = 0.1  # decay learning rate to this fraction of the existing learning rate
-momentum = args.momentum  # momentum
-weight_decay = args.weight_decay
-grad_clip = args.grad_clip
-cudnn.benchmark = args.cuda
-
+momentum = 0.9  # momentum
+weight_decay = 0.0005
+cudnn.benchmark = true
 def main():
     global start_epoch, label_map, epoch, checkpoint, decay_lr_at
     #Init model or load checkpoint
-    if checkpoint is None:
-        start_epoch= 0
-        model = SSD300(num_classes)
-        biases = list()
-        not_biases = list()
-        for param_name, param in model.named_parameters():
+   
+    start_epoch= 0
+    model = SSD300(num_classes)
+    biases = list()
+    not_biases = list()
+    for param_name, param in model.named_parameters():
             if param.requires_grad:
                 if param_name.endswith(".bias"):
                     biases.append(param)
                 else:
                     not_biases.append(param)
-        optimizer = optim.SGD(params= [{'params': biases,"lr": 2* lr}, {"params": not_biases}],
+    optimizer = optim.SGD(params= [{'params': biases,"lr": 2* lr}, {"params": not_biases}],
                               lr = lr, momentum = momentum, weight_decay = weight_decay)
     
+    '''
     else:
         checkpoint = torch.load(checkpoint)
         start_epoch = checkpoint['epoch'] + 1   
@@ -87,12 +85,19 @@ def main():
                     else:
                         not_biases.append(param)
             optimizer = optim.SGD(params= [{'params': biases,"lr": 2* lr}, {"params": not_biases}],lr = lr, momentum = momentum, weight_decay = weight_decay)
-
+    '''
     #Move to default device
     model = model.to(device)
     criterion = MultiBoxLoss(model.default_boxes).to(device)
-    
-    train_dataset = VOCDataset(data_folder, split= "train")
+    root='drive/MyDrive/CSE 5523 Project/'
+    dataset=CrowdDataset(root,'train2.csv',transform=torchvision.transforms.ToTensor())
+    torch.manual_seed(1)
+    indices = torch.randperm(len(dataset)).tolist()
+    dataset_train = dataset
+    root = './'
+    #data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=4, shuffle=False,collate_fn=lambda x:list(zip(*x)))
+    train_dataset = CrowdDataset(root,'train.csv',transform=torchvision.transforms.ToTensor())
+    test_dataset = CrowdDataset(root,'test.csv',transform=torchvision.transforms.ToTensor())
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
                                                shuffle= True, collate_fn= combine,
                                                num_workers = workers, pin_memory = True)
@@ -131,9 +136,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
         #Backward pass
         optimizer.zero_grad()
         loss.backward()
-        
-        if grad_clip is not None:
-            clip_grad(optimizer, grad_clip)
             
         optimizer.step()
         
