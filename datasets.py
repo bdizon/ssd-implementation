@@ -60,5 +60,5 @@ class CrowdDataset(Dataset):
         targets = {} 
         #targets['boxes'] = 
         #targets['labels'] = torch.from_numpy(labels).type(torch.int64)
-        # return torch.FloatTensor(x), torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
-        return x, torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
+        return torch.FloatTensor(x), torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
+        # return x, torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)

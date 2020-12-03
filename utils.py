@@ -61,7 +61,7 @@ def parse_annotation(annotation_path):
         
         boxes.append([xmin, ymin, xmax, ymax])
         labels.append(label_map[label])
-        difficulties.append(difficult)
+        # difficulties.append(difficult)
         
     return {"boxes": boxes, "labels": labels, "difficulties": difficulties}
 #==========================BEGIN CACULATE IoU==================================
@@ -282,7 +282,7 @@ def random_crop(image, boxes, labels, difficulties):
             new_labels = labels[center_in_crop]
             
             #take matching difficulities
-            new_difficulties = difficulties[center_in_crop]
+            # new_difficulties = difficulties[center_in_crop]
             
             #Use the box left and top corner or the crop's
             new_boxes[:, :2] = torch.max(new_boxes[:, :2], crop[:2])
@@ -386,16 +386,17 @@ def combine(batch):
     images = []
     boxes = []
     labels = []
-    difficulties = []
+    # difficulties = []
     
     for b in batch:
         images.append(b[0])
         boxes.append(b[1])
         labels.append(b[2])
-        difficulties.append(b[3])
+        # difficulties.append(b[3])
         
     images = torch.stack(images, dim= 0)
-    return images, boxes, labels, difficulties
+    # return images, boxes, labels, difficulties
+    return images, boxes, labels
 
 def decimate(tensor, m):
     assert tensor.dim() == len(m)
@@ -467,9 +468,12 @@ def clip_grad(optimizer, grad_clip):
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 #===========================END ADJUST TRAINING================================
 def calculate_mAP(det_boxes, det_labels, det_scores, true_boxes, true_labels, true_difficulties):
+    # assert len(det_boxes) == len(det_labels) == len(det_scores) == len(true_boxes) == len(
+    #     true_labels) == len(
+    #     true_difficulties)  # these are all lists of tensors of the same length, i.e. number of images
+    # n_classes = len(label_map)
     assert len(det_boxes) == len(det_labels) == len(det_scores) == len(true_boxes) == len(
-        true_labels) == len(
-        true_difficulties)  # these are all lists of tensors of the same length, i.e. number of images
+        true_labels) # these are all lists of tensors of the same length, i.e. number of images
     n_classes = len(label_map)
 
     # Store all (true) objects in a single continuous tensor while keeping track of the image it is from
@@ -480,7 +484,7 @@ def calculate_mAP(det_boxes, det_labels, det_scores, true_boxes, true_labels, tr
         device)  # (n_objects), n_objects is the total no. of objects across all images
     true_boxes = torch.cat(true_boxes, dim=0)  # (n_objects, 4)
     true_labels = torch.cat(true_labels, dim=0)  # (n_objects)
-    true_difficulties = torch.cat(true_difficulties, dim=0)  # (n_objects)
+    # true_difficulties = torch.cat(true_difficulties, dim=0)  # (n_objects)
 
     assert true_images.size(0) == true_boxes.size(0) == true_labels.size(0)
 
@@ -501,8 +505,8 @@ def calculate_mAP(det_boxes, det_labels, det_scores, true_boxes, true_labels, tr
         # Extract only objects with this class
         true_class_images = true_images[true_labels == c]  # (n_class_objects)
         true_class_boxes = true_boxes[true_labels == c]  # (n_class_objects, 4)
-        true_class_difficulties = true_difficulties[true_labels == c]  # (n_class_objects)
-        n_easy_class_objects = (1 - true_class_difficulties).sum().item()  # ignore difficult objects
+        # true_class_difficulties = true_difficulties[true_labels == c]  # (n_class_objects)
+        # n_easy_class_objects = (1 - true_class_difficulties).sum().item()  # ignore difficult objects
 
         # Keep track of which true objects with this class have already been 'detected'
         # So far, none
@@ -566,7 +570,7 @@ def calculate_mAP(det_boxes, det_labels, det_scores, true_boxes, true_labels, tr
         cumul_false_positives = torch.cumsum(false_positives, dim=0)  # (n_class_detections)
         cumul_precision = cumul_true_positives / (
                 cumul_true_positives + cumul_false_positives + 1e-10)  # (n_class_detections)
-        cumul_recall = cumul_true_positives / n_easy_class_objects  # (n_class_detections)
+        # cumul_recall = cumul_true_positives / n_easy_class_objects  # (n_class_detections)
 
         # Find the mean of the maximum of the precisions corresponding to recalls above the threshold 't'
         recall_thresholds = torch.arange(start=0, end=1.1, step=.1).tolist()  # (11)

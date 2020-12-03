@@ -100,7 +100,7 @@ def main():
     # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
     #                                            shuffle= True, num_workers = workers, pin_memory = True)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
-                                               shuffle= True,collate_fn=lambda x:list(zip(*x)))
+                                               shuffle= True,num_workers=0,collate_fn=combine)
     epochs = iterations // (len(train_dataset) // batch_size)
     decay_lr_at = [it // (len(train_dataset) // batch_size) for it in decay_lr_at]
     
@@ -123,8 +123,10 @@ def train(train_loader, model, criterion, optimizer, epoch):
     
     for i, (images, boxes, labels) in enumerate(train_loader):
         
-        # images = images.to(device)  # (batch_size (N), 3, 300, 300)
-        images = torch.tensor(images).to(device)
+        images = images.to(device)  # (batch_size (N), 3, 300, 300)
+        # images = torch.tensor(images).to(device)
+        # print(images.shape)
+        # [image.to(device) for image in images]
         # images = list(image.to(device) for image in images)
         # # images = np.array(image.to(device) for image in images).convert('RGB')
         # images = torch.FloatTensor(images)
