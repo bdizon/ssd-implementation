@@ -35,11 +35,14 @@ class CrowdDataset(Dataset):
         img_dim = 448
         len_of_grid = img_dim / grid_dim
         img_path = os.path.join(self.root, self.examples.iloc[idx, 0])
+        # print(img_path)
+        # img_path =  self.examples.iloc[idx, 0]
+        # img_path = "./images_part1/000022.png"
         image = Image.open(img_path)
-        annotations_path = os.path.join(self.root, self.examples.iloc[idx, 1])
+        annotations_path = self.examples.iloc[idx, 1]
         annotation_dict = json.load(open(annotations_path, "r"))
         annotations = annotation_dict["boxes"]
-        if len(annotations) is 0: 
+        if len(annotations) == 0: 
           boxes =  np.array([[0,0,1,1]])
           labels = np.zeros(1)
         else:
@@ -53,7 +56,9 @@ class CrowdDataset(Dataset):
         ])
         
         x = t(image) 
+        # print(image)
         targets = {} 
         #targets['boxes'] = 
         #targets['labels'] = torch.from_numpy(labels).type(torch.int64)
+        # return torch.FloatTensor(x), torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
         return x, torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
