@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Apr  4 21:19:33 2020
 
-@author: NAT
-"""
 import sys
 sys.path.append("./model/")
 import torch
@@ -12,10 +7,11 @@ import torch.optim as optim
 from model.SSD300 import SSD300
 from model.vgg import VGG16BaseNet, AuxiliaryNet, PredictionNet
 from model.mutibox_loss import MultiBoxLoss
-from datasets import VOCDataset
+from datasets import CrowdDataset
 from utils import *
 from model.metrics.metric import Metrics
 import argparse
+import torchvision 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -38,17 +34,17 @@ args = ap.parse_args()
 #Data parameters
 
 num_classes = 2
-
 batch_size = 8  # batch size
-iterations = 1000  # number of iterations to train
+iterations = 145000  # number of iterations to train
 workers = 4  # number of workers for loading data in the DataLoader
 print_freq = 100  # print training status every __ batches
-lr =   # learning rate
+lr =  0.001 # learning rate
 decay_lr_at = [96500, 120000]  # decay learning rate after these many iterations
 decay_lr_to = 0.1  # decay learning rate to this fraction of the existing learning rate
 momentum = 0.9  # momentum
 weight_decay = 0.0005
-cudnn.benchmark = true
+cudnn.benchmark = True
+
 def main():
     global start_epoch, label_map, epoch, checkpoint, decay_lr_at
     #Init model or load checkpoint
@@ -89,18 +85,22 @@ def main():
     #Move to default device
     model = model.to(device)
     criterion = MultiBoxLoss(model.default_boxes).to(device)
-    root='drive/MyDrive/CSE 5523 Project/'
-    dataset=CrowdDataset(root,'train2.csv',transform=torchvision.transforms.ToTensor())
-    torch.manual_seed(1)
-    indices = torch.randperm(len(dataset)).tolist()
-    dataset_train = dataset
+    # root='drive/MyDrive/CSE 5523 Project/'
+    # dataset=CrowdDataset(root,'train2.csv',transform=torchvision.transforms.ToTensor())
+    # torch.manual_seed(1)
+    # indices = torch.randperm(len(dataset)).tolist()
+    # dataset_train = dataset
     root = './'
     #data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=4, shuffle=False,collate_fn=lambda x:list(zip(*x)))
-    train_dataset = CrowdDataset(root,'train.csv',transform=torchvision.transforms.ToTensor())
+    train_dataset = CrowdDataset(root,'train2.csv',transform=torchvision.transforms.ToTensor())
     test_dataset = CrowdDataset(root,'test.csv',transform=torchvision.transforms.ToTensor())
+    # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
+    #                                            shuffle= True, collate_fn= combine,
+    #                                            num_workers = workers, pin_memory = True)
+    # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
+    #                                            shuffle= True, num_workers = workers, pin_memory = True)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
-                                               shuffle= True, collate_fn= combine,
-                                               num_workers = workers, pin_memory = True)
+                                               shuffle= True,collate_fn=lambda x:list(zip(*x)))
     epochs = iterations // (len(train_dataset) // batch_size)
     decay_lr_at = [it // (len(train_dataset) // batch_size) for it in decay_lr_at]
     
@@ -121,9 +121,15 @@ def train(train_loader, model, criterion, optimizer, epoch):
     model.train()
     losses = Metrics()
     
-    for i, (images, boxes, labels, _) in enumerate(train_loader):
+    for i, (images, boxes, labels) in enumerate(train_loader):
         
-        images = images.to(device)  # (batch_size (N), 3, 300, 300)
+        # images = images.to(device)  # (batch_size (N), 3, 300, 300)
+        images = torch.tensor(images).to(device)
+        # images = list(image.to(device) for image in images)
+        # # images = np.array(image.to(device) for image in images).convert('RGB')
+        # images = torch.FloatTensor(images)
+        # images = torch.FloatTensor(image.to(device) for image in images)
+
         boxes = [b.to(device) for b in boxes]
         labels = [l.to(device) for l in labels]
         
