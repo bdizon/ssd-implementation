@@ -92,7 +92,7 @@ def main():
     # dataset_train = dataset
     root = './'
     #data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=4, shuffle=False,collate_fn=lambda x:list(zip(*x)))
-    train_dataset = CrowdDataset(root,'train2.csv',transform=torchvision.transforms.ToTensor())
+    train_dataset = CrowdDataset(root,'train.csv',transform=torchvision.transforms.ToTensor())
     test_dataset = CrowdDataset(root,'test.csv',transform=torchvision.transforms.ToTensor())
     # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size= batch_size, 
     #                                            shuffle= True, collate_fn= combine,
@@ -149,8 +149,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
         
         losses.update(loss.item(), images.size(0))
         
-        if i % print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t' 'Loss {loss.val:.4f} ( Average Loss per epoch: {loss.avg:.4f})\t'.format(epoch, i, len(train_loader), loss=losses))
+        # if i % print_freq == 0:
+        print('Epoch: [{0}][{1}/{2}]\t' 'Loss {loss.val:.4f} ( Average Loss per epoch: {loss.avg:.4f})\t'.format(epoch, i, len(train_loader), loss=losses))
     del locs_pred, cls_pred, images, boxes, labels
 
 if __name__ == '__main__':
