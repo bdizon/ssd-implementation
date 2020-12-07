@@ -39,18 +39,28 @@ class CrowdDataset(Dataset):
         # img_path =  self.examples.iloc[idx, 0]
         # img_path = "./images_part1/000022.png"
         image = Image.open(img_path)
-        image = image.resize((300, 300))
+        image = image.resize((300,300))
         annotations_path = os.path.join(self.root, self.examples.iloc[idx, 1])
         annotation_dict = json.load(open(annotations_path, "r"))
         annotations = annotation_dict["boxes"]
-        if len(annotations) is 0:
-            boxes = np.array([[0, 0, 300, 300]])
+        if len(annotations) == 0: 
+            boxes =  np.array([[0,0,1,1]])
             labels = np.zeros(1)
         else:
-            boxes = np.asarray(annotations)
-            new_boxes = boxes / [image.width, image.height, image.width, image.height]
-            boxes = new_boxes * [300, 300, 300, 300]
-            labels = np.ones(len(boxes))
+            boxes =  np.asarray(annotations)
+            new_boxes = boxes / [image.width, image.height, image.width, image.height] 
+            # boxes = boxes * [300,300,300,300]
+            boxes = new_boxes * [300,300,300,300]
+            labels = np.ones(len(boxes)) 
+          
+        # annotation_dict = json.load(open(annotations_path, "r"))
+        # annotations = annotation_dict["boxes"]
+        # if len(annotations) == 0: 
+        #   boxes =  np.array([[0,0,1,1]])
+        #   labels = np.zeros(1)
+        # else:
+        #   boxes =  np.asarray(annotations)
+        #   labels = np.ones(len(boxes))
 
         t = transforms.Compose([
             transforms.ToTensor(),
@@ -59,9 +69,5 @@ class CrowdDataset(Dataset):
         ])
         
         x = t(image) 
-        # print(image)
         targets = {} 
-        #targets['boxes'] = 
-        #targets['labels'] = torch.from_numpy(labels).type(torch.int64)
         return torch.FloatTensor(x), torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
-        # return x, torch.from_numpy(boxes).float() , torch.from_numpy(labels).type(torch.int64)
