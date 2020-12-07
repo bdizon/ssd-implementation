@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Mar 28 23:19:09 2020
 
-@author: NAT
-"""
 from torch import nn
 import torch.nn.functional as F
 import torchvision
@@ -313,3 +308,4 @@ class PredictionNet(nn.Module):
             if isinstance(c, nn.Conv2d):
                 nn.init.xavier_uniform_(c.weight)
                 nn.init.zeros_(c.bias)
+

@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import warnings
 from torch.utils.data import Dataset, DataLoader
 import json
@@ -39,16 +39,19 @@ class CrowdDataset(Dataset):
         # img_path =  self.examples.iloc[idx, 0]
         # img_path = "./images_part1/000022.png"
         image = Image.open(img_path)
-        annotations_path = self.examples.iloc[idx, 1]
+        image = image.resize((300, 300))
+        annotations_path = os.path.join(self.root, self.examples.iloc[idx, 1])
         annotation_dict = json.load(open(annotations_path, "r"))
         annotations = annotation_dict["boxes"]
-        if len(annotations) == 0: 
-          boxes =  np.array([[0,0,1,1]])
-          labels = np.zeros(1)
+        if len(annotations) is 0:
+            boxes = np.array([[0, 0, 300, 300]])
+            labels = np.zeros(1)
         else:
-          boxes =  np.asarray(annotations)
-          labels = np.ones(len(boxes))
-       
+            boxes = np.asarray(annotations)
+            new_boxes = boxes / [image.width, image.height, image.width, image.height]
+            boxes = new_boxes * [300, 300, 300, 300]
+            labels = np.ones(len(boxes))
+
         t = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.455, 0.422, 0.409],
