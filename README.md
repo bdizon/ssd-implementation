@@ -1,6 +1,6 @@
 # Pytorch Implementation of Single Shot MultiBox Detector (SSD)
 
-This is an implementation of SSD300 with VGG16 backbone Architecture: [paper](https://arxiv.org/abs/1512.02325).
+This is an implementation of SSD300 with VGG16 backbone Architecture: [paper](https://arxiv.org/abs/1512.02325). (Adapted from amdegroot (github).
 
 ## Installation
 
